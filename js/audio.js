@@ -55,6 +55,34 @@ class AudioManager {
         setTimeout(() => this.playTone(200, 0.4, 'square', 0.2), 400);
     }
 
+    playShield() {
+        this.playTone(523, 0.1, 'square', 0.2);
+        setTimeout(() => this.playTone(659, 0.1, 'square', 0.2), 80);
+        setTimeout(() => this.playTone(784, 0.15, 'square', 0.15), 160);
+    }
+
+    playShieldBreak() {
+        this.playTone(300, 0.15, 'sawtooth', 0.25);
+        setTimeout(() => this.playTone(200, 0.2, 'sawtooth', 0.2), 100);
+        setTimeout(() => this.playTone(100, 0.3, 'sawtooth', 0.15), 200);
+    }
+
+    playBulletPickup() {
+        this.playTone(440, 0.08, 'square', 0.2);
+        setTimeout(() => this.playTone(550, 0.08, 'square', 0.2), 60);
+        setTimeout(() => this.playTone(660, 0.12, 'square', 0.15), 120);
+    }
+
+    playShoot() {
+        this.playTone(800, 0.05, 'square', 0.2);
+        this.playTone(600, 0.08, 'square', 0.15);
+    }
+
+    playHitObstacle() {
+        this.playTone(200, 0.1, 'sawtooth', 0.25);
+        setTimeout(() => this.playTone(150, 0.15, 'sawtooth', 0.2), 80);
+    }
+
     playBGM() {
         if (!this.initialized || !this.audioContext) return;
         

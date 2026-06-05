@@ -12,6 +12,12 @@ class Player {
         this.animFrame = 0;
         this.animTimer = 0;
         this.animSpeed = 5;
+        
+        this.hasShield = false;
+        this.shieldFlashTimer = 0;
+        this.bullets = 0;
+        this.shootCooldown = 0;
+        this.shootCooldownMax = 30;
     }
 
     jump() {
@@ -20,6 +26,34 @@ class Player {
             this.isJumping = true;
             audioManager.playJump();
         }
+    }
+
+    shoot() {
+        if (this.bullets > 0 && this.shootCooldown <= 0) {
+            this.bullets--;
+            this.shootCooldown = this.shootCooldownMax;
+            audioManager.playShoot();
+            return new Projectile(this.x + this.width, this.y + 20);
+        }
+        return null;
+    }
+
+    activateShield() {
+        this.hasShield = true;
+    }
+
+    useShield() {
+        if (this.hasShield) {
+            this.hasShield = false;
+            this.shieldFlashTimer = 30;
+            audioManager.playShieldBreak();
+            return true;
+        }
+        return false;
+    }
+
+    addBullets(count) {
+        this.bullets += count;
     }
 
     update() {
@@ -37,6 +71,14 @@ class Player {
             this.animTimer = 0;
             this.animFrame = (this.animFrame + 1) % 4;
         }
+        
+        if (this.shootCooldown > 0) {
+            this.shootCooldown--;
+        }
+        
+        if (this.shieldFlashTimer > 0) {
+            this.shieldFlashTimer--;
+        }
     }
 
     render(ctx) {
@@ -51,6 +93,29 @@ class Player {
 
         const drawX = Math.floor(this.x);
         const drawY = Math.floor(this.y);
+        
+        if (this.shieldFlashTimer > 0) {
+            const flashAlpha = this.shieldFlashTimer / 30;
+            ctx.fillStyle = `rgba(100, 200, 255, ${flashAlpha * 0.5})`;
+            ctx.fillRect(drawX - 5, drawY - 5, this.width + 10, this.height + 10);
+        }
+        
+        if (this.hasShield) {
+            const shieldPulse = Math.sin(this.animTimer * 0.2) * 2;
+            ctx.strokeStyle = '#00bfff';
+            ctx.lineWidth = 2;
+            ctx.shadowColor = '#00bfff';
+            ctx.shadowBlur = 10;
+            ctx.beginPath();
+            ctx.arc(drawX + 16, drawY + 24, 28 + shieldPulse, 0, Math.PI * 2);
+            ctx.stroke();
+            
+            ctx.fillStyle = 'rgba(100, 200, 255, 0.15)';
+            ctx.beginPath();
+            ctx.arc(drawX + 16, drawY + 24, 28 + shieldPulse, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.shadowBlur = 0;
+        }
 
         ctx.fillStyle = colors.shirt;
         ctx.fillRect(drawX + 8, drawY + 16, 16, 20);

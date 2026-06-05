@@ -160,9 +160,48 @@ body::before {
 }
 
 .score-board {
-    text-align: right;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     margin-bottom: 10px;
-    padding-right: 10px;
+    padding: 0 10px;
+}
+
+.score-left {
+    display: flex;
+    gap: 20px;
+}
+
+.score-right {
+    display: flex;
+    align-items: center;
+}
+
+.hud-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 10px;
+}
+
+.hud-item.hidden {
+    display: none;
+}
+
+.shield-icon, .bullet-icon {
+    font-size: 16px;
+}
+
+.hud-label {
+    color: #00bfff;
+    text-shadow: 0 0 5px #00bfff;
+}
+
+.hud-value {
+    color: #ff8c00;
+    font-size: 14px;
+    text-shadow: 0 0 5px #ff8c00;
+    min-width: 20px;
 }
 
 .score-label {
@@ -175,6 +214,21 @@ body::before {
     font-size: 16px;
     color: #00ff41;
     text-shadow: 0 0 10px #00ff41;
+}
+
+.game-instructions {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    margin-top: 10px;
+    font-size: 8px;
+    color: #66ff66;
+    opacity: 0.7;
+}
+
+.instruction-item {
+    padding: 5px 10px;
+    border: 1px solid rgba(0, 255, 65, 0.3);
 }
 
 #game-canvas {

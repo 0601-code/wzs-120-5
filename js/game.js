@@ -13,6 +13,8 @@ class Game {
         this.SPEED_INCREMENT = 0.002;
         this.OBSTACLE_INTERVAL = 120;
         this.COIN_INTERVAL = 90;
+        this.SHIELD_INTERVAL = 400;
+        this.BULLET_INTERVAL = 350;
         
         this.gameSpeed = this.INITIAL_SPEED;
         this.score = 0;
@@ -21,6 +23,8 @@ class Game {
         this.canRestart = true;
         this.obstacleTimer = 0;
         this.coinTimer = 0;
+        this.shieldTimer = 0;
+        this.bulletTimer = 0;
         this.backgroundOffset = 0;
         this.animationFrameId = null;
         this.gameoverTimeout = null;
@@ -28,6 +32,9 @@ class Game {
         this.player = null;
         this.obstacles = [];
         this.coins = [];
+        this.shields = [];
+        this.bulletPickups = [];
+        this.projectiles = [];
         this.stars = [];
         
         this.initStars();
@@ -58,6 +65,16 @@ class Game {
                     this.start();
                 }
             }
+            if (e.code === 'KeyJ' || e.code === 'KeyX') {
+                e.preventDefault();
+                if (this.isRunning && !this.isGameOver && this.player) {
+                    const projectile = this.player.shoot();
+                    if (projectile) {
+                        this.projectiles.push(projectile);
+                        this.updateHUD();
+                    }
+                }
+            }
         });
     }
 
@@ -65,12 +82,18 @@ class Game {
         this.player = new Player(100, this.GROUND_Y - 48);
         this.obstacles = [];
         this.coins = [];
+        this.shields = [];
+        this.bulletPickups = [];
+        this.projectiles = [];
         this.gameSpeed = this.INITIAL_SPEED;
         this.score = 0;
         this.isGameOver = false;
         this.obstacleTimer = 0;
         this.coinTimer = 0;
+        this.shieldTimer = 0;
+        this.bulletTimer = 0;
         this.updateScoreDisplay();
+        this.updateHUD();
     }
 
     start() {
@@ -135,6 +158,22 @@ class Game {
             this.coinTimer = 0;
         }
         
+        this.shieldTimer++;
+        if (this.shieldTimer >= this.SHIELD_INTERVAL && !this.player.hasShield) {
+            if (Math.random() < 0.3) {
+                this.spawnShield();
+            }
+            this.shieldTimer = 0;
+        }
+        
+        this.bulletTimer++;
+        if (this.bulletTimer >= this.BULLET_INTERVAL) {
+            if (Math.random() < 0.4) {
+                this.spawnBulletPickup();
+            }
+            this.bulletTimer = 0;
+        }
+        
         this.obstacles = this.obstacles.filter(obs => {
             obs.update(this.gameSpeed);
             return !obs.isOffScreen();
@@ -143,6 +182,21 @@ class Game {
         this.coins = this.coins.filter(coin => {
             coin.update(this.gameSpeed);
             return !coin.isOffScreen() && !coin.collected;
+        });
+        
+        this.shields = this.shields.filter(shield => {
+            shield.update(this.gameSpeed);
+            return !shield.isOffScreen() && !shield.collected;
+        });
+        
+        this.bulletPickups = this.bulletPickups.filter(bullet => {
+            bullet.update(this.gameSpeed);
+            return !bullet.isOffScreen() && !bullet.collected;
+        });
+        
+        this.projectiles = this.projectiles.filter(proj => {
+            proj.update();
+            return proj.active && !proj.isOffScreen();
         });
         
         this.backgroundOffset = (this.backgroundOffset + this.gameSpeed * 0.5) % 40;
@@ -168,15 +222,51 @@ class Game {
         this.coins.push(coin);
     }
 
+    spawnShield() {
+        const x = this.width + 50;
+        const y = Utils.randomInt(this.GROUND_Y - 120, this.GROUND_Y - 60);
+        const shield = new Shield(x, y);
+        this.shields.push(shield);
+    }
+
+    spawnBulletPickup() {
+        const x = this.width + 50;
+        const y = Utils.randomInt(this.GROUND_Y - 130, this.GROUND_Y - 50);
+        const bulletPickup = new BulletPickup(x, y);
+        this.bulletPickups.push(bulletPickup);
+    }
+
     checkCollisions() {
         const playerBounds = this.player.getBounds();
         
         for (const obstacle of this.obstacles) {
             if (Utils.checkCollision(playerBounds, obstacle.getBounds())) {
-                this.gameOver();
-                return;
+                if (this.player.useShield()) {
+                    obstacle.destroyed = true;
+                    audioManager.playHitObstacle();
+                } else {
+                    this.gameOver();
+                    return;
+                }
             }
         }
+        
+        this.obstacles = this.obstacles.filter(obs => !obs.destroyed);
+        
+        for (const projectile of this.projectiles) {
+            for (const obstacle of this.obstacles) {
+                if (projectile.active && !obstacle.destroyed && 
+                    Utils.checkCollision(projectile.getBounds(), obstacle.getBounds())) {
+                    projectile.hit();
+                    obstacle.destroyed = true;
+                    audioManager.playHitObstacle();
+                    this.score += 5;
+                    this.updateScoreDisplay();
+                }
+            }
+        }
+        
+        this.obstacles = this.obstacles.filter(obs => !obs.destroyed);
         
         for (const coin of this.coins) {
             if (!coin.collected && Utils.checkCollision(playerBounds, coin.getBounds())) {
@@ -184,6 +274,37 @@ class Game {
                 this.score += points;
                 this.updateScoreDisplay();
             }
+        }
+        
+        for (const shield of this.shields) {
+            if (!shield.collected && Utils.checkCollision(playerBounds, shield.getBounds())) {
+                if (shield.collect()) {
+                    this.player.activateShield();
+                    this.updateHUD();
+                }
+            }
+        }
+        
+        for (const bulletPickup of this.bulletPickups) {
+            if (!bulletPickup.collected && Utils.checkCollision(playerBounds, bulletPickup.getBounds())) {
+                const bullets = bulletPickup.collect();
+                if (bullets > 0) {
+                    this.player.addBullets(bullets);
+                    this.updateHUD();
+                }
+            }
+        }
+    }
+
+    updateHUD() {
+        const shieldIndicator = document.getElementById('shield-indicator');
+        const bulletCount = document.getElementById('bullet-count');
+        
+        if (shieldIndicator) {
+            shieldIndicator.style.display = this.player.hasShield ? 'inline-block' : 'none';
+        }
+        if (bulletCount) {
+            bulletCount.textContent = this.player.bullets;
         }
     }
 
@@ -222,7 +343,10 @@ class Game {
         this.renderGround();
         
         this.coins.forEach(coin => coin.render(this.ctx));
+        this.shields.forEach(shield => shield.render(this.ctx));
+        this.bulletPickups.forEach(bullet => bullet.render(this.ctx));
         this.obstacles.forEach(obs => obs.render(this.ctx));
+        this.projectiles.forEach(proj => proj.render(this.ctx));
         
         if (this.player) {
             this.player.render(this.ctx);
