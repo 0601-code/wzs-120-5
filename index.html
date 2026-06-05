@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>像素跑酷 - Pixel Runner</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="game-container">
+        <div id="start-screen" class="screen">
+            <h1 class="game-title">PIXEL RUNNER</h1>
+            <p class="subtitle">像素跑酷</p>
+            <button id="start-btn" class="pixel-btn">PLAY</button>
+            <p class="instruction">按 空格键 跳跃</p>
+        </div>
+
+        <div id="game-screen" class="screen hidden">
+            <div class="score-board">
+                <span class="score-label">SCORE:</span>
+                <span id="score" class="score-value">0</span>
+            </div>
+            <canvas id="game-canvas" width="800" height="400"></canvas>
+        </div>
+
+        <div id="gameover-screen" class="screen hidden">
+            <h2 class="gameover-title">GAME OVER</h2>
+            <div class="final-score">
+                <p>本局分数: <span id="final-score">0</span></p>
+                <p>历史最高: <span id="high-score">0</span></p>
+            </div>
+            <button id="restart-btn" class="pixel-btn">PLAY AGAIN</button>
+        </div>
+    </div>
+
+    <script src="js/utils.js"></script>
+    <script src="js/audio.js"></script>
+    <script src="js/player.js"></script>
+    <script src="js/obstacle.js"></script>
+    <script src="js/coin.js"></script>
+    <script src="js/game.js"></script>
+</body>
+</html>
